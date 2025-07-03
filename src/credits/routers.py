@@ -10,6 +10,7 @@ from datetime import datetime
 
 router = APIRouter()
 
+
 @router.get("/user_credits/{user_id}", response_model=List[CreditInfo])
 def get_user_credits(user_id: int, db: Session = Depends(get_db)):
     credits = db.query(Credit).filter(Credit.user_id == user_id).all()
@@ -21,7 +22,7 @@ def get_user_credits(user_id: int, db: Session = Depends(get_db)):
 
     for credit in credits:
         credit_info = CreditInfo(
-            credit_date =credit.issuance_date,
+            credit_date=credit.issuance_date,
             credit_sum=credit.body,
             credit_percent=credit.percent,
             is_closed=credit.actual_return_date is not None,
@@ -35,8 +36,10 @@ def get_user_credits(user_id: int, db: Session = Depends(get_db)):
             credit_info.total_payments = total_sum
         else:
             overdue_days = (datetime.now().date() - credit.return_date).days
-            principal_payments = sum([p.sum for p in db.query(Payment).filter(Payment.credit_id == credit.id, Payment.type_id == 1)])
-            interest_payments = sum([p.sum for p in db.query(Payment).filter(Payment.credit_id == credit.id, Payment.type_id == 2)])
+            principal_payments = sum(
+                [p.sum for p in db.query(Payment).filter(Payment.credit_id == credit.id, Payment.type_id == 1)])
+            interest_payments = sum(
+                [p.sum for p in db.query(Payment).filter(Payment.credit_id == credit.id, Payment.type_id == 2)])
 
             credit_info.overdue_days = overdue_days
             credit_info.principal_payments = principal_payments
@@ -46,11 +49,11 @@ def get_user_credits(user_id: int, db: Session = Depends(get_db)):
 
     return result
 
+
 @router.post("/plans_insert")
 def plans_insert(file: UploadFile = File(), db: Session = Depends(get_db)):
     contents = file.file.read()
     df = pd.read_excel(BytesIO(contents))
-
 
     required_columns = ['period', 'category_id', 'sum']
     for column in required_columns:
